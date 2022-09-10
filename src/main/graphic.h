@@ -27,6 +27,7 @@ typedef struct {
 
 /*-------------------------------- parameter---------------------------------*/
 extern Dynamic gfx_dynamic;
+extern Dynamic gfx_dynamic_cube;
 extern Gfx* glistp;
 extern Gfx gfx_glist[GFX_GLIST_LEN];
 /*-------------------------------- function ---------------------------------*/
