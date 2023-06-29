@@ -24,16 +24,12 @@
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 	// Use 'postCreateCommand' to run commands after the container is created.
-    "postCreateCommand": "export ROOT=/etc/n64; export N64_LIBGCCDIR=/opt/crashsdk/lib/gcc/mips64-elf/12.2.0",
+    //"postCreateCommand": "export ROOT=/etc/n64; export N64_LIBGCCDIR=/opt/crashsdk/lib/gcc/mips64-elf/12.2.0",
 	// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
 	"remoteUser": "vscode",
 	"remoteEnv": {
 		"PATH": "${containerEnv:PATH}:/etc/n64/usr/sbin:/opt/crashsdk/bin",
 		"ROOT": "/etc/n64",
 		"N64_LIBGCCDIR": "/opt/crashsdk/lib/gcc/mips64-elf/12.2.0"
-	},
-	"containerEnv": {
-		"ROOT": "/etc/n64",
-		"N64_LIBGCCDIR": "/opt/crashsdk/lib/gcc/mips64-elf/12.2.0"
-	},
+	}
 }
