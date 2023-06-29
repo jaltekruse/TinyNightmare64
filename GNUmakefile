@@ -42,7 +42,7 @@ default: $(TARGETS)
 #     Don't touch below unless you know what you're doing!     #
 ################################################################
 
-include $(ROOT)/usr/include/make/PRdefs
+include $(N64_ROOT)/usr/include/make/PRdefs
 
 BOOT		= /usr/lib/n64/PR/bootcode/boot.6102
 BOOT_OBJ	= boot.6102.o
@@ -73,10 +73,10 @@ endif
 #                        Linker Settings                       #
 ################################################################
 
-LCINCS =	-I. -I$(ROOT)/usr/include/PR -I $(ROOT)/usr/include -I$(NUSYSINC) -I $(ROOT)/usr/include/nustd
+LCINCS =	-I. -I$(N64_ROOT)/usr/include/PR -I $(N64_ROOT)/usr/include -I$(NUSYSINC) -I $(N64_ROOT)/usr/include/nustd
 LCOPTS =	-G 0
 LDIRT  =	$(ELF) $(CP_LD_SCRIPT) $(TARGETS) $(MAP) $(ASMOBJECTS)
-LDFLAGS=	$(MKDEPOPT) -L$(ROOT)/usr/lib -L$(ROOT)/usr/lib/PR -L$(NUSYSLIB) $(N64LIB) -L$(N64_LIBGCCDIR) -lgcc -lnustd
+LDFLAGS=	$(MKDEPOPT) -L$(N64_ROOT)/usr/lib -L$(N64_ROOT)/usr/lib/PR -L$(NUSYSLIB) $(N64LIB) -L$(N64_LIBGCCDIR) -lgcc -lnustd
 
 
 ################################################################

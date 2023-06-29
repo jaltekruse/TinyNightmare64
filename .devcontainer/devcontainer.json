@@ -29,7 +29,7 @@
 	"remoteUser": "vscode",
 	"remoteEnv": {
 		"PATH": "${containerEnv:PATH}:/etc/n64/usr/sbin:/opt/crashsdk/bin",
-		"ROOT": "/etc/n64",
+		"N64_ROOT": "/etc/n64",
 		"N64_LIBGCCDIR": "/opt/crashsdk/lib/gcc/mips64-elf/12.2.0"
 	}
 }
