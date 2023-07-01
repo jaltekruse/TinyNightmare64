@@ -74,7 +74,7 @@ float animspeed;
 
 // Camera
 Camera cam = {
-    distance_from_entity: 700,
+    distance_from_entity: 2000,
     pitch: 20,
     angle_around_entity: 0,
 };
@@ -271,75 +271,6 @@ void move_animated_entity_one_frame(AnimatedEntity *animated_entity){
 }
 
 /*==============================
-    handle_camera_c_buttons
-    handles pitch, distance_from_entity 
-    and angle_around_entity variables
-==============================*/
-
-void handle_camera_c_buttons(Camera *camera, NUContData cont[1]){
-
-    if (cont[0].trigger & U_CBUTTONS && camera->distance_from_entity == 2000){
-        camera->distance_from_entity = 1200;
-        camera->pitch = 20;
-    } else
-    if (cont[0].trigger & U_CBUTTONS && camera->distance_from_entity == 1200){
-        camera->distance_from_entity = 700;
-        camera->pitch = 20;
-    }
-
-    if (cont[0].trigger & D_CBUTTONS && camera->distance_from_entity == 700){
-        camera->distance_from_entity = 1200;
-        camera->pitch = 20;
-    } else
-    if (cont[0].trigger & D_CBUTTONS && camera->distance_from_entity == 1200){
-        camera->distance_from_entity = 2000;
-        camera->pitch = 20;
-    }
-
-    if (cont[0].trigger & L_CBUTTONS){
-        camera->angle_around_entity -= 15;
-    }
-   
-    if (cont[0].trigger & R_CBUTTONS && camera->angle_around_entity == 0){
-        camera->angle_around_entity = 360;
-        camera->angle_around_entity += 15;
-    }else
-    if (cont[0].trigger & R_CBUTTONS){
-        camera->angle_around_entity += 25;
-    }
-
-    if (camera->angle_around_entity == 360){
-        camera->angle_around_entity = 0;
-    }
-}
-
-
-
-/*==============================
-    handle_camera_analog_stick
-    moves camera with analog stick
-==============================*/
-
-void handle_camera_analog_stick(Camera *camera, NUContData cont[1]){
-
-    if (fabs(cont->stick_x) < 7){cont->stick_x = 0;}
-    if (fabs(cont->stick_y) < 7){cont->stick_y = 0;}
-
-    camera->angle_around_entity += cont->stick_x / 40;
-    camera->pitch += cont->stick_y / 40;
-
-    if (cam.angle_around_entity > 360) {cam.angle_around_entity  = 0;}
-    if (cam.angle_around_entity < 0) {cam.angle_around_entity  = 360;}
-
-    if (cam.angle_around_entity  > 360) {cam.angle_around_entity  = 0;}
-    if (cam.angle_around_entity  < 0) {cam.angle_around_entity  = 360;}
-
-    if (cam.pitch > 85) {cam.pitch = 85;}
-    if (cam.pitch < -85) {cam.pitch = -85;}
-}
-
-
-/*==============================
     get_cam_position
     calculates camera coordinates
 ==============================*/
@@ -364,7 +295,7 @@ void get_cam_position(Camera *camera, Entity *entity){
 
 void move_cam(Camera *camera, Entity *entity, NUContData cont[1]){
 
-    handle_camera_c_buttons(camera, cont);
+    //handle_camera_c_buttons(camera, cont);
     //handle_camera_analog_stick(camera, cont);
     get_cam_position(camera, entity);
 }
@@ -523,6 +454,8 @@ void set_entity_state(AnimatedEntity * animated_entity, entity_state new_state) 
 ==============================*/
 
 void handle_controller_input(NUContData cont[1], AnimatedEntity* entity){
+
+    //cont[0].trigger & D_CBUTTONS, U_CBUTTONS
     if (cont[0].trigger & R_TRIG) {
     }
     if (cont[0].trigger & A_BUTTON) set_entity_state(entity, JUMP);
@@ -683,31 +616,6 @@ float min(float a, float b) {
     if (a < b) return a;
     else return b;
 }
-
-float minimum_distance(float *v, float *w, float *p) {
-  // Return minimum distance between line segment vw and point p
-  const float l2 = length_squared(v, w);  // i.e. |w-v|^2 -  avoid a sqrt
-  if (l2 == 0.0) return distance_2d(p, v);   // v == w case
-  // Consider the line extending the segment, parameterized as v + t (w - v).
-  // We find projection of point p onto the line. 
-  // It falls where t = [(p-v) . (w-v)] / |w-v|^2
-  // We clamp t from [0,1] to handle points outside the segment vw.
-  float p_v[3] = {};
-  p_v[0] = p[0] - v[0];
-  p_v[1] = p[1] - v[1];
-  float w_v[3] = {};
-  w_v[0] = w[0] - v[0];
-  w_v[1] = w[1] - v[1];
-  const float t = max(0, min(1, dot(p_v, w_v) / l2));
-  float projection[3];
-  projection[0] = v[0] + t * (w[0] - v[0]);
-  projection[1] = v[1] + t * (w[1] - v[1]);
-  //const vec2 projection = v + t * (w - v);  // Projection falls on the segment
-  return distance_2d(p, projection);
-}
-
-float min_dist_to_wall_old;
-float min_dist_to_wall_new;
 
 void detect_collisions() {
 }
