@@ -12,7 +12,6 @@
 #include "structs.h"
 #include "helper.h"
 #include "sausage64.h"
-#include "texcube.h"
 #include "palette.h"
 #include "nick.h"
 #include "ground_block.h"
