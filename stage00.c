@@ -18,8 +18,6 @@
 #include "ground_block.h"
 
 #include "axisMdl.h"
-#include "debug.h"
-
 
 /*********************************
               Macros
@@ -731,9 +729,6 @@ void stage00_init(void){
 
 void stage00_update(void){
     
-    // Poll for USB commands
-    debug_pollcommands();  
-
     //alculate fps
     time_management(&time_data);
 
@@ -771,7 +766,6 @@ void stage00_draw(void){
     draw_world(&nick, &cam, &light_data);    
 
     // Ensure we haven't gone over the display list size and start the graphics task
-    debug_assert((glistp-glist) < GLIST_LENGTH);
     #if TV_TYPE != PAL
         nuGfxTaskStart(glist, (s32)(glistp - glist) * sizeof(Gfx), NU_GFX_UCODE_F3DEX, NU_SC_NOSWAPBUFFER);
     #else

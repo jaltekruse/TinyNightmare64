@@ -13,7 +13,7 @@ ASMOBJECTS  =	$(ASMFILES:.s=.o)
 CODECFILES  = nuboot.c main.c graphic.c helper.c stage00.c sausage64.c
 CODEHFILES  =
 
-DEBUGFILES = debug.c usb.c
+DEBUGFILES = 
 
 ELF		= sausage.elf
 TARGETS	= sausage.z64
