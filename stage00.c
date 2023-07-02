@@ -53,29 +53,6 @@ typedef struct {
 	float roll;
 } Camera;
 
-typedef enum { 
-    IDLE, 
-    WALK, 
-   	RUN,
-	ROLL,
-   	JUMP,
-	FALL,
-	MIDAIR,
-	FALLBACK,	
-} entity_state;
-
-typedef enum {
-	NICK,
-	WILLY,
-	SKELLY
-} entity_type;
-
-typedef struct {
-	int health;
-	int damage;
-	int ammo;
-} BaseMechanics;
-
 typedef struct {
 	Mtx	pos_mtx;
 	Mtx	rot_mtx[3];
@@ -90,11 +67,6 @@ typedef struct {
 	float vertical_speed;
 	float forward_speed;
 	float side_speed;
-	entity_state state;
-	entity_type type;
-	BaseMechanics health;
-	BaseMechanics damage;
-	BaseMechanics ammo;	
 } Entity;
 
 typedef struct {
@@ -117,20 +89,11 @@ float rad(float angle);
 float deg(float rad);
 
 void move_entity_analog_stick(Entity *entity, Camera camera, NUContData cont[1]);
-void handle_camera_c_buttons(Camera *camera, NUContData cont[1]);
-
-void move_entity_c_buttons(Entity *entity, Camera camera, NUContData cont[1]);
-void handle_camera_analog_stick(Camera *camera, NUContData cont[1]);
 
 void get_cam_position(Camera *camera, Entity *entity);
-void move_cam(Camera *camera, Entity* entity, NUContData cont[1]);
 
 void set_light(LightData *light);
 void set_cam(Camera *camera, Entity entity);
-
-void set_entity_state(AnimatedEntity * animated_entity, entity_state new_state);
-void animate_nick(NUContData cont[1]);
-void nick_animcallback(u16 anim);
 
 void draw_animated_entity(AnimatedEntity *entity);
 void draw_static_entity(StaticEntity *static_entity);
@@ -160,11 +123,7 @@ LightData light_data = {
 AnimatedEntity nick = {
     entity: {
         pos: { 0, 0, 0},
-        type: NICK,
-        health: 100,
-        damage: 10,
         scale: 3,
-        ammo: 10
     }
 };
 
@@ -197,7 +156,6 @@ float deg(float rad){
     move_entity
     Moves entity with analog stick
 ==============================*/
-
 void move_entity_analog_stick(Entity *entity, Camera camera, NUContData cont[1]){
 
     if ((cont->stick_x != 0 || cont->stick_y != 0)) {
@@ -221,7 +179,6 @@ void move_entity_one_frame(Entity *entity){
     get_cam_position
     calculates camera coordinates
 ==============================*/
-
 void get_cam_position(Camera *camera, Entity *entity){
 
     camera->horizontal_distance_from_entity = camera->distance_from_entity * cos(rad(camera->pitch));
@@ -235,23 +192,9 @@ void get_cam_position(Camera *camera, Entity *entity){
 }
 
 /*==============================
-    move_cam
-    Controls camera movement
-==============================*/
-
-void move_cam(Camera *camera, Entity *entity, NUContData cont[1]){
-
-    //handle_camera_c_buttons(camera, cont);
-    //handle_camera_analog_stick(camera, cont);
-    get_cam_position(camera, entity);
-}
-
-
-/*==============================
     set_light
     Sets the lights 
 ==============================*/
-
 void set_light(LightData *light){
 
     int i;
@@ -306,9 +249,6 @@ void set_cam(Camera *camera, Entity entity){
 void update_animation_based_on_state(AnimatedEntity * animated_entity) {
 }
 
-void set_entity_state(AnimatedEntity * animated_entity, entity_state new_state) {
-}
-
 /*==============================
     animate_nick & animate_willy
     link entity animations to controller input
@@ -323,27 +263,13 @@ void handle_controller_input(NUContData cont[1], AnimatedEntity* entity){
     //cont[0].trigger & D_CBUTTONS, U_CBUTTONS
     if (cont[0].trigger & R_TRIG) {
     }
-    if (cont[0].trigger & A_BUTTON) set_entity_state(entity, JUMP);
-    if (cont[0].trigger & B_BUTTON) set_entity_state(entity, ROLL);
-    if (entity->entity.speed > 900) {
-        set_entity_state(entity, RUN);
-    } else if (cont->stick_x != 0 || cont->stick_y != 0) {
-        set_entity_state(entity, WALK);
-    }
+    if (cont[0].trigger & A_BUTTON) ;
+    if (cont[0].trigger & B_BUTTON) ;
 
     //handle movement
     move_entity_analog_stick(&entity->entity, cam, contdata);
-    //move_entity_c_buttons(entity.entity, cam, contdata);
 
-    move_cam(&cam, &entity->entity, contdata);
-}
-
-/*==============================
-    animcallback
-    Called before an animation finishes
-==============================*/
-
-void nick_animcallback(u16 anim){
+    get_cam_position(&cam, &entity->entity);
 }
 
 /*==============================
@@ -466,7 +392,6 @@ void draw_world(AnimatedEntity *highlighted, Camera *camera, LightData *light){
     Draws debug data
 ==============================*/
 
-
 int angle_to_player;
 
 void draw_debug_data(){
@@ -486,7 +411,6 @@ void stage00_init(void){
     // Initialize entities
     sausage64_initmodel(&nick.helper, MODEL_nick, nickMtx);
     sausage64_set_anim(&nick.helper, ANIMATION_nick_idle); 
-    sausage64_set_animcallback(&nick.helper, nick_animcallback);
 
     // Set nick's animation speed based on region
     #if TV_TYPE == PAL    
