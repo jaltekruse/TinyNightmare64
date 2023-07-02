@@ -101,23 +101,13 @@ Mtx nickMtx[MESHCOUNT_nick];
 #define GROUND_SEGMENTS_COUNT 25  // this should be the previous two multiplied together
 StaticEntity ground_segments[GROUND_SEGMENTS_COUNT]= {};
 
-/*
-StaticEntity candy = {
-    entity: {
-        pos: { -500, 500, 150},
-        scale: 1,
-    },
-    mesh: gfx_candy,
-};
-*/
-
 #define SCENERY_COUNT 0
 StaticEntity scenery[SCENERY_COUNT] = {};
 
 // USB
-static char uselight = TRUE;
+static char uselight = FALSE;
 static char drawaxis = TRUE;
-static char freezelight = FALSE;
+static char freezelight = TRUE;
 static char usb_buffer[USB_BUFFER_SIZE];
 
 
