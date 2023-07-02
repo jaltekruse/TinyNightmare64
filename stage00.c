@@ -96,9 +96,9 @@ AnimatedEntity nick = {
 
 Mtx nickMtx[MESHCOUNT_nick];
 
-#define WIDTH_GROUND_SEGMENTS 5
-#define HEIGHT_GROUND_SEGMENTS 5
-#define GROUND_SEGMENTS_COUNT 25  // this should be the previous two multiplied together
+#define WIDTH_GROUND_SEGMENTS 2
+#define HEIGHT_GROUND_SEGMENTS 2
+#define GROUND_SEGMENTS_COUNT 4  // this should be the previous two multiplied together
 StaticEntity ground_segments[GROUND_SEGMENTS_COUNT]= {};
 
 #define SCENERY_COUNT 0
@@ -204,7 +204,8 @@ float Q_rsqrt( float number )
 int curr_nick_state;
 
 void move_entity_analog_stick(Entity *entity, Camera camera, NUContData cont[1]){
-	
+
+    // dead zone to avoid stick drift
 	if (fabs(cont->stick_x) < 7){cont->stick_x = 0;}
 	if (fabs(cont->stick_y) < 7){cont->stick_y = 0;}
 
@@ -351,18 +352,7 @@ void set_cam(Camera *camera, Entity entity){
 }
 
 void update_animation_based_on_state(AnimatedEntity * animated_entity) {
-    entity_state new_state = animated_entity->entity.state;
-    s64ModelHelper* helper = &animated_entity->helper;
-    if (animated_entity->entity.type == NICK) {
-        if (new_state == JUMP) sausage64_set_anim(helper, ANIMATION_nick_jump);
-        if (new_state == ROLL) sausage64_set_anim(helper, ANIMATION_nick_roll);
-        if (new_state == FALLBACK) sausage64_set_anim(helper, ANIMATION_nick_fallback);
-        if (new_state == FALL) sausage64_set_anim(helper, ANIMATION_nick_fall);
-        if (new_state == MIDAIR) sausage64_set_anim(helper, ANIMATION_nick_midair);
-        if (new_state == IDLE) sausage64_set_anim(helper, ANIMATION_nick_idle);
-        if (new_state == WALK) sausage64_set_anim(helper, ANIMATION_nick_walk);
-        if (new_state == RUN) sausage64_set_anim(helper, ANIMATION_nick_run);
-    }}
+}
 
 void set_entity_state(AnimatedEntity * animated_entity, entity_state new_state) {
 
@@ -687,7 +677,7 @@ void stage00_init(void){
     sausage64_set_animcallback(&nick.helper, nick_animcallback);
 
     // the side length of one panel of ground
-    int ground_size = 5000;
+    int ground_size = 500;
     // these are declared about with the ground_segments array
     // it is the size of the grid of ground tiles we are creating
     // WIDTH_GROUND_SEGMENTS, HEIGHT_GROUND_SEGMENTS 
@@ -696,9 +686,9 @@ void stage00_init(void){
         for (int j = 0; j < HEIGHT_GROUND_SEGMENTS; j++) {
             ground_segments[i * WIDTH_GROUND_SEGMENTS + j].entity.pos[0] =  i * ground_size - (WIDTH_GROUND_SEGMENTS / 2) * ground_size;
             ground_segments[i * WIDTH_GROUND_SEGMENTS + j].entity.pos[1] =  j * ground_size - (HEIGHT_GROUND_SEGMENTS / 2) * ground_size;
-            ground_segments[i * WIDTH_GROUND_SEGMENTS + j].entity.pos[2] = 800;
+            ground_segments[i * WIDTH_GROUND_SEGMENTS + j].entity.pos[2] = 50;
             ground_segments[i * WIDTH_GROUND_SEGMENTS + j].mesh = gfx_ground;
-            ground_segments[i * WIDTH_GROUND_SEGMENTS + j].entity.scale = 10;
+            ground_segments[i * WIDTH_GROUND_SEGMENTS + j].entity.scale = 1;
         }
     }
 
