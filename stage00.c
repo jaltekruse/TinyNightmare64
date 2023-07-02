@@ -9,7 +9,6 @@
 #include <nusys.h>
 #include <string.h> // Needed for CrashSDK compatibility
 #include "config.h"
-#include "structs.h"
 #include "helper.h"
 #include "sausage64.h"
 #include "palette.h"
@@ -25,13 +24,97 @@
 #define COS_45 0.7071
 
 /*********************************
+            Structs
+*********************************/
+float frame_duration = 0.03f;
+float animspeed;
+typedef struct{
+    Light amb;
+    Light dir;
+	float angle[3];
+	int ambcol;
+}LightData;
+
+typedef struct {
+	Mtx modeling;
+	Mtx projection;
+	Mtx viewpoint;
+	Mtx camRot;
+	u16 normal;
+
+	float distance_from_entity;
+	float horizontal_distance_from_entity;
+	float vertical_distance_from_entity;
+    float angle_around_entity;
+
+	float pos[3];
+	float pitch;
+	float yaw;
+	float roll;
+} Camera;
+
+typedef enum { 
+    IDLE, 
+    WALK, 
+   	RUN,
+	ROLL,
+   	JUMP,
+	FALL,
+	MIDAIR,
+	FALLBACK,	
+} entity_state;
+
+typedef enum {
+	NICK,
+	WILLY,
+	SKELLY
+} entity_type;
+
+typedef struct {
+	int health;
+	int damage;
+	int ammo;
+} BaseMechanics;
+
+typedef struct {
+	Mtx	pos_mtx;
+	Mtx	rot_mtx[3];
+	Mtx scale_mtx;
+	float size[3];
+	float pos[3];
+	float dir[3];
+	float scale;
+	float pitch;
+	float yaw;
+	float speed;
+	float vertical_speed;
+	float forward_speed;
+	float side_speed;
+	entity_state state;
+	entity_type type;
+	BaseMechanics health;
+	BaseMechanics damage;
+	BaseMechanics ammo;	
+} Entity;
+
+typedef struct {
+	Entity entity;
+	s64ModelHelper helper;
+} AnimatedEntity;
+
+
+typedef struct {
+	Entity entity;
+	Gfx *mesh;
+} StaticEntity;
+
+
+/*********************************
         Function Prototypes
 *********************************/
 
 float rad(float angle);
 float deg(float rad);
-
-void time_management(TimeData *time);
 
 void move_entity_analog_stick(Entity *entity, Camera camera, NUContData cont[1]);
 void handle_camera_c_buttons(Camera *camera, NUContData cont[1]);
@@ -48,7 +131,6 @@ void set_cam(Camera *camera, Entity entity);
 void set_entity_state(AnimatedEntity * animated_entity, entity_state new_state);
 void animate_nick(NUContData cont[1]);
 void nick_animcallback(u16 anim);
-void willy_animcallback(u16 anim);
 
 void draw_animated_entity(AnimatedEntity *entity);
 void draw_static_entity(StaticEntity *static_entity);
@@ -60,12 +142,6 @@ void draw_debug_data();
              Globals
 *********************************/
 
-//Variables
-TimeData time_data = {
-    FPS_index: 0,
-    frame_duration: 0.03f
-};
-float animspeed;
 
 // Camera
 Camera cam = {
@@ -101,7 +177,6 @@ StaticEntity scenery[SCENERY_COUNT] = {
 
 static char uselight = FALSE;
 static char drawaxis = TRUE;
-static char freezelight = TRUE;
 
 /*==============================
     rad & deg
@@ -118,24 +193,6 @@ float deg(float rad){
 	return angle;
 }
 
-// https://en.wikipedia.org/wiki/Fast_inverse_square_root
-float Q_rsqrt( float number )
-{
-	long i;
-	float x2, y;
-	const float threehalfs = 1.5F;
-
-	x2 = number * 0.5F;
-	y  = number;
-	i  = * ( long * ) &y;                       // evil floating point bit level hacking
-	i  = 0x5f3759df - ( i >> 1 );               // what the fuck? 
-	y  = * ( float * ) &i;
-	y  = y * ( threehalfs - ( x2 * y * y ) );   // 1st iteration
-//	y  = y * ( threehalfs - ( x2 * y * y ) );   // 2nd iteration, this can be removed
-
-	return y;
-}
-
 /*==============================
     move_entity
     Moves entity with analog stick
@@ -143,13 +200,9 @@ float Q_rsqrt( float number )
 
 void move_entity_analog_stick(Entity *entity, Camera camera, NUContData cont[1]){
 
-    // dead zone to avoid stick drift
-	if (fabs(cont->stick_x) < 7){cont->stick_x = 0;}
-	if (fabs(cont->stick_y) < 7){cont->stick_y = 0;}
-
     if ((cont->stick_x != 0 || cont->stick_y != 0)) {
         entity->yaw = deg(atan2(cont->stick_x, -cont->stick_y) - rad(camera.angle_around_entity));
-        entity->speed = 1/Q_rsqrt(cont->stick_x * cont->stick_x + cont->stick_y * cont->stick_y) * 12;
+        entity->speed = 10 * (fabs(cont->stick_x) + fabs(cont->stick_y));
     }
 
     if ( cont->stick_x == 0 && cont->stick_y == 0) {
@@ -159,7 +212,7 @@ void move_entity_analog_stick(Entity *entity, Camera camera, NUContData cont[1])
 
 void move_entity_one_frame(Entity *entity){
 
-    float frame_distance = time_data.frame_duration * entity->speed;
+    float frame_distance = frame_duration * entity->speed;
     entity->pos[0] += frame_distance * sin(rad(entity->yaw));
     entity->pos[1] -= frame_distance * cos(rad(entity->yaw));
 }
@@ -176,11 +229,10 @@ void get_cam_position(Camera *camera, Entity *entity){
 
     camera->pos[0] = entity->pos[0] - camera->horizontal_distance_from_entity * sin(rad(camera->angle_around_entity));
     camera->pos[1] = entity->pos[1] - camera->horizontal_distance_from_entity * cos(rad(camera->angle_around_entity));
-    camera->pos[2] = camera->vertical_distance_from_entity + 1/Q_rsqrt(entity->pos[2]);
+    camera->pos[2] = camera->vertical_distance_from_entity + entity->pos[2];
 
     if ((camera->vertical_distance_from_entity + entity->pos[2]) < 5){cam.pos[2] = 5;}
 }
-
 
 /*==============================
     move_cam
@@ -213,12 +265,6 @@ void set_light(LightData *light){
         light->dir.l.col[i] = 255;
         light->dir.l.colc[i] = 255;
     }
-    // handle the light direction so it's always projecting from the camera's position
-    if (!freezelight){
-        light->dir.l.dir[0] = -127*sinf(light->angle[0]*0.0174532925);
-        light->dir.l.dir[1] = 127*sinf(light->angle[2]*0.0174532925)*cosf(light->angle[0]*0.0174532925);
-        light->dir.l.dir[2] = 127*cosf(light->angle[2]*0.0174532925)*cosf(light->angle[0]*0.0174532925);
-    }
     // Send the light struct to the RSP
     gSPNumLights(glistp++, NUMLIGHTS_1);
     gSPLight(glistp++, &light->dir, 1);
@@ -243,7 +289,7 @@ void set_cam(Camera *camera, Entity entity){
     guLookAt(
     	&camera->viewpoint,
     	camera->pos[0], camera->pos[1], camera->pos[2],
-    	entity.pos[0], entity.pos[1], 1/Q_rsqrt(entity.pos[2]) + 120,
+    	entity.pos[0], entity.pos[1], entity.pos[2] + 120,
     	0, 0, 1
   	);
 
@@ -269,6 +315,10 @@ void set_entity_state(AnimatedEntity * animated_entity, entity_state new_state) 
 ==============================*/
 
 void handle_controller_input(NUContData cont[1], AnimatedEntity* entity){
+
+    // dead zone to avoid stick drift
+	if (fabs(cont->stick_x) < 7){cont->stick_x = 0;}
+	if (fabs(cont->stick_y) < 7){cont->stick_y = 0;}
 
     //cont[0].trigger & D_CBUTTONS, U_CBUTTONS
     if (cont[0].trigger & R_TRIG) {
@@ -420,9 +470,6 @@ void draw_world(AnimatedEntity *highlighted, Camera *camera, LightData *light){
 int angle_to_player;
 
 void draw_debug_data(){
-
-    nuDebConTextPos(NU_DEB_CON_WINDOW0, 1, 1);
-    nuDebConPrintf(NU_DEB_CON_WINDOW0, "FPS %d", (int)time_data.FPS);
 
     nuDebConTextPos(NU_DEB_CON_WINDOW0, 1, 2);
     nuDebConPrintf(NU_DEB_CON_WINDOW0, "angle to player %d", angle_to_player);
