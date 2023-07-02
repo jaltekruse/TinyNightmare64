@@ -387,8 +387,6 @@ void set_entity_state(AnimatedEntity * animated_entity, entity_state new_state) 
             (    curr_state == IDLE 
               || curr_state == WALK 
               || curr_state == RUN)) {
-        entity->state = new_state;
-        update_animation_based_on_state(animated_entity);
         animated_entity->entity.vertical_speed = 600;
     }
 
@@ -396,27 +394,21 @@ void set_entity_state(AnimatedEntity * animated_entity, entity_state new_state) 
             (    curr_state == IDLE 
               || curr_state == WALK 
               || curr_state == RUN )) {
-        entity->state = new_state;
-        update_animation_based_on_state(animated_entity);
         animated_entity->entity.speed = 800;
     }
 
     if (new_state == WALK && curr_state == IDLE) {
-        entity->state = new_state;
         // TODO - just to make the zombie move, gets overriden by controller for user
         animated_entity->entity.speed = 400;
-        update_animation_based_on_state(animated_entity);
     }
     if (new_state == RUN && 
             ( curr_state == IDLE || curr_state == WALK)) {
-        entity->state = new_state;
-        update_animation_based_on_state(animated_entity);
         // TODO - just to make willy move, gets overriden by controller for user
         animated_entity->entity.speed = 600;
     }
 
     if (new_state == IDLE
-        && (     curr_state == WALK 
+        && ( curr_state == WALK 
               || curr_state == RUN 
               || curr_state == ROLL 
               || curr_state == FALL 
@@ -424,25 +416,11 @@ void set_entity_state(AnimatedEntity * animated_entity, entity_state new_state) 
               || curr_state == JUMP 
             )
             ) {
-        entity->state = new_state;
-        update_animation_based_on_state(animated_entity);
         animated_entity->entity.speed = 0;
     }
 
-    if (new_state == MIDAIR) {
-        entity->state = new_state;
-        update_animation_based_on_state(animated_entity);
-    }
-
-    if (new_state == FALL) {
-        entity->state = new_state;
-        update_animation_based_on_state(animated_entity);
-    }
-
-    if (new_state == FALLBACK) {
-        entity->state = new_state;
-        update_animation_based_on_state(animated_entity);
-    }
+    entity->state = new_state;
+    update_animation_based_on_state(animated_entity);
 }
 
 /*==============================
