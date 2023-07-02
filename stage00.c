@@ -22,17 +22,14 @@
               Macros
 *********************************/
 
-#define USB_BUFFER_SIZE 256
 #define COS_45 0.7071
 
 /*********************************
         Function Prototypes
 *********************************/
 
-float get_time();
 float rad(float angle);
 float deg(float rad);
-int lim(u32 input);
 
 void time_management(TimeData *time);
 
@@ -66,6 +63,7 @@ void draw_debug_data();
 //Variables
 TimeData time_data = {
     FPS_index: 0,
+    frame_duration: 0.03f
 };
 float animspeed;
 
@@ -96,44 +94,15 @@ AnimatedEntity nick = {
 
 Mtx nickMtx[MESHCOUNT_nick];
 
-#define WIDTH_GROUND_SEGMENTS 2
-#define HEIGHT_GROUND_SEGMENTS 2
-#define GROUND_SEGMENTS_COUNT 4  // this should be the previous two multiplied together
-StaticEntity ground_segments[GROUND_SEGMENTS_COUNT]= {};
+#define SCENERY_COUNT 1
+StaticEntity scenery[SCENERY_COUNT] = {
+ {entity : {pos : {-300, 300, 30}, scale : 1}, mesh : gfx_ground}
+};
 
-#define SCENERY_COUNT 0
-StaticEntity scenery[SCENERY_COUNT] = {};
-
-// USB
 static char uselight = FALSE;
 static char drawaxis = TRUE;
 static char freezelight = TRUE;
-static char usb_buffer[USB_BUFFER_SIZE];
 
-
-/*==============================
-    get_time
-    returns time in seconds
-==============================*/
-
-float get_time(){
-
-    float time = (s32)OS_CYCLES_TO_USEC(osGetTime()) / 1000000.0f;
-    return time;
-}
-
-/*==============================
-    cycles_to_sec
-    converts cycles to seconds
-==============================*/
-
-float cycles_to_sec(OSTime cycles){
-
-    float time = (s32)OS_CYCLES_TO_USEC(cycles) / 1000000.0f;
-    return time;
-}
-
-  
 /*==============================
     rad & deg
     convert between angles and radians
@@ -147,35 +116,6 @@ float rad(float angle){
 float deg(float rad){
 	float angle = 180 / M_PI * rad;
 	return angle;
-}
-
-
-/*==============================
-    lim
-    auxiliary function for 8 directional movement
-==============================*/
-
-int lim(u32 input){
-    if (input == 0) {return 0;}
-    else {return 1;}
-}
-
-
-/*==============================
-    time_management
-    calculates FPS and frame_duration variable    
-==============================*/
-
-void time_management(TimeData *time){
-
-    time->cur_frame = osGetTime();
-
-    time->frame_duration = cycles_to_sec(time->cur_frame - time->last_frame);
-
-    time->FPS = 1 / time->frame_duration;
-
-    time->last_frame = time->cur_frame;
-
 }
 
 // https://en.wikipedia.org/wiki/Fast_inverse_square_root
@@ -201,30 +141,19 @@ float Q_rsqrt( float number )
     Moves entity with analog stick
 ==============================*/
 
-int curr_nick_state;
-
 void move_entity_analog_stick(Entity *entity, Camera camera, NUContData cont[1]){
 
     // dead zone to avoid stick drift
 	if (fabs(cont->stick_x) < 7){cont->stick_x = 0;}
 	if (fabs(cont->stick_y) < 7){cont->stick_y = 0;}
 
-    int curr_state = entity->state;
-    curr_nick_state = curr_state;
-    if (curr_state != ROLL
-        && curr_state != JUMP
-        && curr_state != FALLBACK 
-        && curr_state != FALL
-        && curr_state != MIDAIR 
-        ) {
-        if ((cont->stick_x != 0 || cont->stick_y != 0)) {
-            entity->yaw = deg(atan2(cont->stick_x, -cont->stick_y) - rad(camera.angle_around_entity));
-            entity->speed = 1/Q_rsqrt(cont->stick_x * cont->stick_x + cont->stick_y * cont->stick_y) * 12;
-        }
+    if ((cont->stick_x != 0 || cont->stick_y != 0)) {
+        entity->yaw = deg(atan2(cont->stick_x, -cont->stick_y) - rad(camera.angle_around_entity));
+        entity->speed = 1/Q_rsqrt(cont->stick_x * cont->stick_x + cont->stick_y * cont->stick_y) * 12;
+    }
 
-        if ( cont->stick_x == 0 && cont->stick_y == 0) {
-            entity->speed = 0;
-        }
+    if ( cont->stick_x == 0 && cont->stick_y == 0) {
+        entity->speed = 0;
     }
 }
 
@@ -233,29 +162,6 @@ void move_entity_one_frame(Entity *entity){
     float frame_distance = time_data.frame_duration * entity->speed;
     entity->pos[0] += frame_distance * sin(rad(entity->yaw));
     entity->pos[1] -= frame_distance * cos(rad(entity->yaw));
-}
-
-void move_animated_entity_one_frame(AnimatedEntity *animated_entity){
-    Entity *entity = &animated_entity->entity;
-
-    int GRAVITY = 14;
-    // apply some gravity
-    if (entity->pos[2] > 0 || entity->vertical_speed > 0 || entity->vertical_speed < 0 ) {
-
-        if (entity->type == WILLY && entity->state == FALLBACK) {
-            // TODO hacky standin "animation" for willy getting hit, jump up and fall back fast
-            //entity->vertical_speed -= 1200;
-        } else {
-            entity->vertical_speed -= GRAVITY;
-        }
-        entity->pos[2] += time_data.frame_duration * entity->vertical_speed;
-        if (entity->pos[2] < 0) {
-            entity->vertical_speed = 0;
-            entity->pos[2] = 0;
-            set_entity_state(animated_entity, IDLE);
-        }
-    } 
-    move_entity_one_frame(entity);
 }
 
 /*==============================
@@ -355,74 +261,6 @@ void update_animation_based_on_state(AnimatedEntity * animated_entity) {
 }
 
 void set_entity_state(AnimatedEntity * animated_entity, entity_state new_state) {
-
-    Entity * entity = &animated_entity->entity;
-    int curr_state = entity->state;
-
-    if (curr_state == new_state) {
-        return;
-    }
-
-    if (new_state == JUMP && 
-            (    curr_state == IDLE 
-              || curr_state == WALK 
-              || curr_state == RUN)) {
-        entity->state = new_state;
-        update_animation_based_on_state(animated_entity);
-        animated_entity->entity.vertical_speed = 600;
-    }
-
-    if (new_state == ROLL && 
-            (    curr_state == IDLE 
-              || curr_state == WALK 
-              || curr_state == RUN )) {
-        entity->state = new_state;
-        update_animation_based_on_state(animated_entity);
-        animated_entity->entity.speed = 800;
-    }
-
-    if (new_state == WALK && curr_state == IDLE) {
-        entity->state = new_state;
-        // TODO - just to make the zombie move, gets overriden by controller for user
-        animated_entity->entity.speed = 400;
-        update_animation_based_on_state(animated_entity);
-    }
-    if (new_state == RUN && 
-            ( curr_state == IDLE || curr_state == WALK)) {
-        entity->state = new_state;
-        update_animation_based_on_state(animated_entity);
-        // TODO - just to make willy move, gets overriden by controller for user
-        animated_entity->entity.speed = 600;
-    }
-
-    if (new_state == IDLE
-        && (     curr_state == WALK 
-              || curr_state == RUN 
-              || curr_state == ROLL 
-              || curr_state == FALL 
-              || curr_state == FALLBACK
-              || curr_state == JUMP 
-            )
-            ) {
-        entity->state = new_state;
-        update_animation_based_on_state(animated_entity);
-        animated_entity->entity.speed = 0;
-    }
-
-    if (new_state == MIDAIR) {
-        entity->state = new_state;
-        update_animation_based_on_state(animated_entity);
-    }
-
-    if (new_state == FALL) {
-        entity->state = new_state;
-        update_animation_based_on_state(animated_entity);
-    }
-
-    if (new_state == FALLBACK) {
-        entity->state = new_state;
-        update_animation_based_on_state(animated_entity);
-    }
 }
 
 /*==============================
@@ -443,16 +281,6 @@ void handle_controller_input(NUContData cont[1], AnimatedEntity* entity){
         set_entity_state(entity, WALK);
     }
 
-    if (cont->stick_x == 0 && cont->stick_y == 0
-        && entity->entity.state != JUMP 
-        && entity->entity.state != ROLL
-        && entity->entity.state != FALLBACK
-        && entity->entity.state != FALL 
-        && entity->entity.state != MIDAIR 
-        ) {
-        set_entity_state(entity, IDLE);
-    }
-
     //handle movement
     move_entity_analog_stick(&entity->entity, cam, contdata);
     //move_entity_c_buttons(entity.entity, cam, contdata);
@@ -460,38 +288,12 @@ void handle_controller_input(NUContData cont[1], AnimatedEntity* entity){
     move_cam(&cam, &entity->entity, contdata);
 }
 
-void when_animation_completes(AnimatedEntity * animated_entity) {
-    // Go to idle animation when we finished attacking
-    switch(animated_entity->entity.state)
-    {
-        case JUMP:
-            set_entity_state(animated_entity, MIDAIR);
-            break;
-        case MIDAIR:
-            set_entity_state(animated_entity, FALL);
-            break;
-        case FALL:
-            set_entity_state(animated_entity, IDLE);
-            break;
-        case ROLL:
-        case FALLBACK:
-            set_entity_state(animated_entity, IDLE);
-            animated_entity->entity.speed = 0;
-            break;
-    }
-}
-
-
 /*==============================
     animcallback
     Called before an animation finishes
 ==============================*/
 
 void nick_animcallback(u16 anim){
-    // yes this currently ignores the passed in animation, might not be bad to verify we are finishing
-    // the animation we are expecting, but this way the logic for where we go when transitioning out of
-    // a given state can be shared across different animated entities, that can do some subset, of move/roll/run/etc.
-    when_animation_completes(&nick);
 }
 
 /*==============================
@@ -561,39 +363,6 @@ void vector(float *dest, float *p1, float *p2) {
     dest[1] = p2[1] - p1[1];
 }
 
-float distance(float* pos1, float* pos2) {
-    return 1 / Q_rsqrt( 
-          (pos1[0] - pos2[0]) * (pos1[0] - pos2[0])
-        + (pos1[1] - pos2[1]) * (pos1[1] - pos2[1])
-        + (pos1[2] - pos2[2]) * (pos1[2] - pos2[2])
-    );
-}
-
-// length of a line segment in x and y directions
-// this is only 2D for now, but takes 3d pts
-float length_squared(float *pos1, float *pos2) {
-    return
-          (pos1[0] - pos2[0]) * (pos1[0] - pos2[0])
-        + (pos1[1] - pos2[1]) * (pos1[1] - pos2[1]);
-}
-
-float distance_2d(float* pos1, float* pos2) {
-    return 1 / Q_rsqrt( 
-          (pos1[0] - pos2[0]) * (pos1[0] - pos2[0])
-        + (pos1[1] - pos2[1]) * (pos1[1] - pos2[1])
-    );
-}
-
-float max(float a, float b) {
-    if (a > b) return a;
-    else return b;
-}
-
-float min(float a, float b) {
-    if (a < b) return a;
-    else return b;
-}
-
 void detect_collisions() {
 }
 
@@ -625,10 +394,6 @@ void draw_world(AnimatedEntity *highlighted, Camera *camera, LightData *light){
     set_light(light);
 
     //draw the entities
-
-    for (int i = 0; i < GROUND_SEGMENTS_COUNT; i++) {
-        draw_static_entity(&ground_segments[i]);
-    }
 
     for (int i = 0; i < SCENERY_COUNT; i++) {
         draw_static_entity(&scenery[i]);
@@ -676,22 +441,6 @@ void stage00_init(void){
     sausage64_set_anim(&nick.helper, ANIMATION_nick_idle); 
     sausage64_set_animcallback(&nick.helper, nick_animcallback);
 
-    // the side length of one panel of ground
-    int ground_size = 500;
-    // these are declared about with the ground_segments array
-    // it is the size of the grid of ground tiles we are creating
-    // WIDTH_GROUND_SEGMENTS, HEIGHT_GROUND_SEGMENTS 
-    // setup the ground
-    for (int i = 0; i < WIDTH_GROUND_SEGMENTS; i++) {
-        for (int j = 0; j < HEIGHT_GROUND_SEGMENTS; j++) {
-            ground_segments[i * WIDTH_GROUND_SEGMENTS + j].entity.pos[0] =  i * ground_size - (WIDTH_GROUND_SEGMENTS / 2) * ground_size;
-            ground_segments[i * WIDTH_GROUND_SEGMENTS + j].entity.pos[1] =  j * ground_size - (HEIGHT_GROUND_SEGMENTS / 2) * ground_size;
-            ground_segments[i * WIDTH_GROUND_SEGMENTS + j].entity.pos[2] = 50;
-            ground_segments[i * WIDTH_GROUND_SEGMENTS + j].mesh = gfx_ground;
-            ground_segments[i * WIDTH_GROUND_SEGMENTS + j].entity.scale = 1;
-        }
-    }
-
     // Set nick's animation speed based on region
     #if TV_TYPE == PAL    
         animspeed = 0.66;
@@ -708,9 +457,6 @@ void stage00_init(void){
 
 void stage00_update(void){
     
-    //alculate fps
-    time_management(&time_data);
-
     // Read the controller
     nuContDataGetEx(contdata, 0);
 
@@ -719,7 +465,7 @@ void stage00_update(void){
 
     detect_collisions();
 
-    move_animated_entity_one_frame(&nick);
+    move_entity_one_frame(&nick.entity);
    
     // Advacnce animations
     
