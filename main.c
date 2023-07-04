@@ -7,7 +7,6 @@ Program entrypoint.
 #include <nusys.h>
 #include "config.h"
 #include "stages.h"
-#include "debug.h"
 
 
 /*********************************
@@ -46,19 +45,6 @@ void mainproc(void)
     
     // Initialize the controller
     nuContInit();
-    
-    // Initialize the debug library
-    debug_initialize();
-    debug_addcommand("ListAnims", "List the animations", command_listanims);
-    debug_addcommand("ListFaces", "List the faces", command_listfaces);
-    debug_addcommand("SetAnim", "Set the animation", command_setanim);
-    debug_addcommand("SetFace", "Set the face", command_setface);
-    debug_addcommand("ToggleLight", "Toggle lighting", command_togglelight);
-    debug_addcommand("FreezeLight", "Freeze the light position", command_freezelight);
-    debug_addcommand("ToggleLerp", "Toggle animation interpolation", command_togglelerp);
-    debug_addcommand("ToggleLoop", "Toggle animation looping", command_toggleloop);
-    debug_addcommand("ToggleAxis", "Toggle floor axis", command_toggleaxis);
-    debug_printcommands();
         
     // Initialize stage 0
     stage00_init();

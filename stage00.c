@@ -12,35 +12,11 @@
 #include "structs.h"
 #include "helper.h"
 #include "sausage64.h"
-#include "texcube.h"
 #include "palette.h"
 #include "nick.h"
-#include "willy.h"
 #include "ground_block.h"
-#include "candy.h"
-#include "pumpkin.h"
-#include "gravestone.h"
-#include "gravestone_cross.h"
-#include "gravestone_flat.h"
-#include "gravestone_flat_2.h"
 
-#include "tree1clear.h"
-#include "tree1grey.h"
-#include "tree1dark.h"
-#include "tree2clear.h"
-#include "tree2grey.h"
-#include "tree2dark.h"
-#include "tree3.h"
-#include "tree4.h"
-#include "tree5.h"
-
-#include "entrance.h"
-#include "fence.h"
-
-#include "shack.h"
 #include "axisMdl.h"
-#include "debug.h"
-
 
 /*********************************
               Macros
@@ -95,8 +71,8 @@ float animspeed;
 
 // Camera
 Camera cam = {
-    distance_from_entity: 700,
-    pitch: 30,
+    distance_from_entity: 2000,
+    pitch: 20,
     angle_around_entity: 0,
 };
 
@@ -113,87 +89,25 @@ AnimatedEntity nick = {
         type: NICK,
         health: 100,
         damage: 10,
+        scale: 3,
         ammo: 10
     }
 };
 
 Mtx nickMtx[MESHCOUNT_nick];
 
-AnimatedEntity willy = {
-    entity: {
-        pos: { 400, 400, 0},
-        yaw: 180,
-        type: WILLY
-    }
-};
-
-Mtx willyMtx[MESHCOUNT_willy];
-
-StaticEntity axis = {
-    entity: {
-        pos: { 0, 0, 0},
-        scale: 1,
-    },
-    mesh: gfx_axis,
-};
-
 #define WIDTH_GROUND_SEGMENTS 5
 #define HEIGHT_GROUND_SEGMENTS 5
 #define GROUND_SEGMENTS_COUNT 25  // this should be the previous two multiplied together
 StaticEntity ground_segments[GROUND_SEGMENTS_COUNT]= {};
 
-StaticEntity candy = {
-    entity: {
-        pos: { -500, 500, 150},
-        scale: 1,
-    },
-    mesh: gfx_candy,
-};
-
-#define SCENERY_COUNT 35
-StaticEntity scenery[SCENERY_COUNT] = {
-    {entity : {pos : {-300, 300, 30}, scale : 1}, mesh : gfx_pumpkin},
-    {entity : {pos : {-300, 350, 30}, scale : 1}, mesh : gfx_pumpkin},
-    {entity : {pos : {-240, 350, 30}, scale : 1}, mesh : gfx_pumpkin},
-    {entity : {pos : {-120, 250, 30}, scale : 1}, mesh : gfx_pumpkin},
-    {entity : {pos : {-300, 300, 30}, scale : 1}, mesh : gfx_pumpkin},
-    {entity : {pos : {-300, 350, 30}, scale : 1}, mesh : gfx_pumpkin},
-    {entity : {pos : {-240, 350, 30}, scale : 1}, mesh : gfx_pumpkin},
-    {entity : {pos : {-120, 250, 30}, scale : 1}, mesh : gfx_pumpkin},
-    {entity : {pos : {300, 300, 30}, scale : 1}, mesh : gfx_gravestone},
-    {entity : {pos : {300, -300, 30}, scale : 1}, mesh : gfx_gravestone_cross},
-    {entity : {pos : {300, -600, 30}, scale : 1}, mesh : gfx_gravestone_flat},
-    {entity : {pos : {300, 500, 30}, scale : 1}, mesh : gfx_gravestone_flat_2},
-    {entity : {pos : {-200, 400, 30}, scale : 15}, mesh : gfx_tree1clear},
-    {entity : {pos : {-100, 800, 30}, scale : 15}, mesh : gfx_tree2clear},
-    {entity : {pos : {0, -300, 30}, scale : 15}, mesh : gfx_tree3},
-    {entity : {pos : {-600, 200, 30}, scale : 15}, mesh : gfx_tree4},
-    {entity : {pos : {-1500, 900, 30}, scale : 15}, mesh : gfx_tree5},
-
-    {entity : {pos : {600, -4325, 30}, scale : 2, yaw : 180}, mesh : gfx_fence},
-    {entity : {pos : {-350, -4325, 30}, scale : 2, yaw : 0}, mesh : gfx_fence},
-    {entity : {pos : {600, -3325, 30}, scale : 2, yaw : 270}, mesh : gfx_fence},
-    {entity : {pos : {-350, -3325, 30}, scale : 2, yaw : 270}, mesh : gfx_fence},
-    {entity : {pos : {1610, -3325, 30}, scale : 2, yaw : 180}, mesh : gfx_fence},
-    {entity : {pos : {-1350, -3325, 30}, scale : 2, yaw : 0}, mesh : gfx_fence},
-    {entity : {pos : {2200, -2500, 30}, scale : 2, yaw : 235}, mesh : gfx_fence},
-    {entity : {pos : {-2150, -2500, 30}, scale : 2, yaw : 315}, mesh : gfx_fence},
-    {entity : {pos : {2200, -1500, 30}, scale : 2, yaw : 270}, mesh : gfx_fence},
-    {entity : {pos : {-2150, -1500, 30}, scale : 2, yaw : 270}, mesh : gfx_fence},
-    {entity : {pos : {-2150, -500, 30}, scale : 2, yaw : 270}, mesh : gfx_fence},
-    {entity : {pos : {2200, -500, 30}, scale : 2, yaw : 270}, mesh : gfx_fence},
-    {entity : {pos : {2200, -500, 30}, scale : 2, yaw : 135}, mesh : gfx_fence},
-    {entity : {pos : {-1450, 200, 30}, scale : 2, yaw : 225}, mesh : gfx_fence},
-    {entity : {pos : {-450, 200, 30}, scale : 2, yaw : 180}, mesh : gfx_fence},
-    {entity : {pos : {1500, 200, 30}, scale : 2, yaw : 180}, mesh : gfx_fence},
-    {entity : {pos : {0, 200, 30}, scale : 2}, mesh : gfx_entrance},
-    {entity : {pos : {2000, 2000, 0}, scale: 1}, mesh : gfx_shack},
-};
+#define SCENERY_COUNT 0
+StaticEntity scenery[SCENERY_COUNT] = {};
 
 // USB
-static char uselight = TRUE;
+static char uselight = FALSE;
 static char drawaxis = TRUE;
-static char freezelight = FALSE;
+static char freezelight = TRUE;
 static char usb_buffer[USB_BUFFER_SIZE];
 
 
@@ -282,8 +196,6 @@ float Q_rsqrt( float number )
 	return y;
 }
 
-
-
 /*==============================
     move_entity
     Moves entity with analog stick
@@ -346,106 +258,6 @@ void move_animated_entity_one_frame(AnimatedEntity *animated_entity){
 }
 
 /*==============================
-    handle_camera_c_buttons
-    handles pitch, distance_from_entity 
-    and angle_around_entity variables
-==============================*/
-
-void handle_camera_c_buttons(Camera *camera, NUContData cont[1]){
-
-    if (cont[0].trigger & U_CBUTTONS && camera->distance_from_entity == 2000){
-        camera->distance_from_entity = 1200;
-        camera->pitch = 35;
-    } else
-    if (cont[0].trigger & U_CBUTTONS && camera->distance_from_entity == 1200){
-        camera->distance_from_entity = 700;
-        camera->pitch = 30;
-    }
-
-    if (cont[0].trigger & D_CBUTTONS && camera->distance_from_entity == 700){
-        camera->distance_from_entity = 1200;
-        camera->pitch = 35;
-    } else
-    if (cont[0].trigger & D_CBUTTONS && camera->distance_from_entity == 1200){
-        camera->distance_from_entity = 2000;
-        camera->pitch = 40;
-    }
-
-    if (cont[0].trigger & L_CBUTTONS){
-        camera->angle_around_entity -= 15;
-    }
-   
-    if (cont[0].trigger & R_CBUTTONS && camera->angle_around_entity == 0){
-        camera->angle_around_entity = 360;
-        camera->angle_around_entity += 15;
-    }else
-    if (cont[0].trigger & R_CBUTTONS){
-        camera->angle_around_entity += 25;
-    }
-
-    if (camera->angle_around_entity == 360){
-        camera->angle_around_entity = 0;
-    }
-}
-
-
-/*==============================
-    move_entity_c_buttons
-    Moves entity with c buttons
-==============================*/
-
-void move_entity_c_buttons(Entity *entity, Camera camera, NUContData cont[1]){
-
-    entity->forward_speed = lim(contdata[0].button & U_CBUTTONS) - lim(contdata[0].button & D_CBUTTONS);
-    entity->side_speed = lim(contdata[0].button & L_CBUTTONS) - lim(contdata[0].button & R_CBUTTONS);
-
-	if (entity->forward_speed != 0 || entity->side_speed != 0) {
-    	entity->yaw = deg(atan2(-entity->side_speed, -entity->forward_speed) - rad(camera.angle_around_entity));
-    }
-
-    if (entity->forward_speed != 0 && entity->side_speed != 0){
-
-        entity->forward_speed = entity->forward_speed * COS_45;
-        entity->side_speed = entity->side_speed * COS_45;
-    }
-
-    float frame_distance_forward = time_data.frame_duration * entity->forward_speed * 500;
-    float frame_distance_side = time_data.frame_duration * entity->side_speed * 500;
-
-
-    entity->pos[0] += frame_distance_forward * sin(rad(camera.angle_around_entity));
-    entity->pos[1] += frame_distance_forward * cos(rad(camera.angle_around_entity));
-
-    entity->pos[0] += frame_distance_side * sin(rad(camera.angle_around_entity - 90));
-    entity->pos[1] += frame_distance_side * cos(rad(camera.angle_around_entity - 90));
-}
-
-
-/*==============================
-    handle_camera_analog_stick
-    moves camera with analog stick
-==============================*/
-
-void handle_camera_analog_stick(Camera *camera, NUContData cont[1]){
-
-    if (fabs(cont->stick_x) < 7){cont->stick_x = 0;}
-    if (fabs(cont->stick_y) < 7){cont->stick_y = 0;}
-
-    camera->angle_around_entity += cont->stick_x / 40;
-    camera->pitch += cont->stick_y / 40;
-
-    if (cam.angle_around_entity > 360) {cam.angle_around_entity  = 0;}
-    if (cam.angle_around_entity < 0) {cam.angle_around_entity  = 360;}
-
-    if (cam.angle_around_entity  > 360) {cam.angle_around_entity  = 0;}
-    if (cam.angle_around_entity  < 0) {cam.angle_around_entity  = 360;}
-
-    if (cam.pitch > 85) {cam.pitch = 85;}
-    if (cam.pitch < -85) {cam.pitch = -85;}
-}
-
-
-/*==============================
     get_cam_position
     calculates camera coordinates
 ==============================*/
@@ -470,7 +282,7 @@ void get_cam_position(Camera *camera, Entity *entity){
 
 void move_cam(Camera *camera, Entity *entity, NUContData cont[1]){
 
-    handle_camera_c_buttons(camera, cont);
+    //handle_camera_c_buttons(camera, cont);
     //handle_camera_analog_stick(camera, cont);
     get_cam_position(camera, entity);
 }
@@ -550,15 +362,7 @@ void update_animation_based_on_state(AnimatedEntity * animated_entity) {
         if (new_state == IDLE) sausage64_set_anim(helper, ANIMATION_nick_idle);
         if (new_state == WALK) sausage64_set_anim(helper, ANIMATION_nick_walk);
         if (new_state == RUN) sausage64_set_anim(helper, ANIMATION_nick_run);
-    } else if (animated_entity->entity.type == WILLY) {
-        // TODO - handle states that willy can't be in somewhere
-        if (new_state == JUMP) sausage64_set_anim(helper, ANIMATION_willy_jump);
-        if (new_state == ROLL) sausage64_set_anim(helper, ANIMATION_willy_spinattack);
-        if (new_state == FALLBACK) sausage64_set_anim(helper, ANIMATION_willy_fall_ahead);
-        if (new_state == IDLE) sausage64_set_anim(helper, ANIMATION_willy_idle);
-        if (new_state == RUN) sausage64_set_anim(helper, ANIMATION_willy_run);
-    }
-}
+    }}
 
 void set_entity_state(AnimatedEntity * animated_entity, entity_state new_state) {
 
@@ -573,8 +377,6 @@ void set_entity_state(AnimatedEntity * animated_entity, entity_state new_state) 
             (    curr_state == IDLE 
               || curr_state == WALK 
               || curr_state == RUN)) {
-        entity->state = new_state;
-        update_animation_based_on_state(animated_entity);
         animated_entity->entity.vertical_speed = 600;
     }
 
@@ -582,25 +384,21 @@ void set_entity_state(AnimatedEntity * animated_entity, entity_state new_state) 
             (    curr_state == IDLE 
               || curr_state == WALK 
               || curr_state == RUN )) {
-        entity->state = new_state;
-        update_animation_based_on_state(animated_entity);
         animated_entity->entity.speed = 800;
     }
 
     if (new_state == WALK && curr_state == IDLE) {
-        entity->state = new_state;
-        update_animation_based_on_state(animated_entity);
+        // TODO - just to make the zombie move, gets overriden by controller for user
+        animated_entity->entity.speed = 400;
     }
     if (new_state == RUN && 
             ( curr_state == IDLE || curr_state == WALK)) {
-        entity->state = new_state;
-        update_animation_based_on_state(animated_entity);
         // TODO - just to make willy move, gets overriden by controller for user
-        animated_entity->entity.speed = 200;
+        animated_entity->entity.speed = 600;
     }
 
     if (new_state == IDLE
-        && (     curr_state == WALK 
+        && ( curr_state == WALK 
               || curr_state == RUN 
               || curr_state == ROLL 
               || curr_state == FALL 
@@ -608,25 +406,11 @@ void set_entity_state(AnimatedEntity * animated_entity, entity_state new_state) 
               || curr_state == JUMP 
             )
             ) {
-        entity->state = new_state;
-        update_animation_based_on_state(animated_entity);
         animated_entity->entity.speed = 0;
     }
 
-    if (new_state == MIDAIR) {
-        entity->state = new_state;
-        update_animation_based_on_state(animated_entity);
-    }
-
-    if (new_state == FALL) {
-        entity->state = new_state;
-        update_animation_based_on_state(animated_entity);
-    }
-
-    if (new_state == FALLBACK) {
-        entity->state = new_state;
-        update_animation_based_on_state(animated_entity);
-    }
+    entity->state = new_state;
+    update_animation_based_on_state(animated_entity);
 }
 
 /*==============================
@@ -635,12 +419,9 @@ void set_entity_state(AnimatedEntity * animated_entity, entity_state new_state) 
 ==============================*/
 
 void handle_controller_input(NUContData cont[1], AnimatedEntity* entity){
+
+    //cont[0].trigger & D_CBUTTONS, U_CBUTTONS
     if (cont[0].trigger & R_TRIG) {
-        candy.entity.pos[0] = entity->entity.pos[0];
-        candy.entity.pos[1] = entity->entity.pos[1];
-        candy.entity.pos[2] = entity->entity.pos[2] + 50;
-        candy.entity.speed = 3000;
-        candy.entity.yaw = entity->entity.yaw;
     }
     if (cont[0].trigger & A_BUTTON) set_entity_state(entity, JUMP);
     if (cont[0].trigger & B_BUTTON) set_entity_state(entity, ROLL);
@@ -701,25 +482,6 @@ void nick_animcallback(u16 anim){
     when_animation_completes(&nick);
 }
 
-void willy_animcallback(u16 anim)
-{
-    // Go to idle animation when we finished attacking
-    switch(willy.entity.state)
-    {
-        case JUMP:
-            set_entity_state(&willy, IDLE);
-            break;
-        case FALLBACK:
-            set_entity_state(&willy, IDLE);
-            willy.entity.speed = 0;
-        case ROLL:
-            set_entity_state(&willy, IDLE);
-            willy.entity.speed = 0;
-            break;
-    }
-}
-
-
 /*==============================
     draw_animated_entity
     draws animated entities
@@ -730,13 +492,17 @@ void draw_animated_entity(AnimatedEntity *animated_entity){
     guTranslate(&animated_entity->entity.pos_mtx, animated_entity->entity.pos[0], animated_entity->entity.pos[1], animated_entity->entity.pos[2]);
     guRotate(&animated_entity->entity.rot_mtx[0], animated_entity->entity.pitch, 1, 0, 0);
     guRotate(&animated_entity->entity.rot_mtx[1], animated_entity->entity.yaw, 0, 0, 1);
+    float scale = animated_entity->entity.scale;
+    guScale(&animated_entity->entity.scale_mtx, scale, scale, scale);
 
     gSPMatrix(glistp++, OS_K0_TO_PHYSICAL(&animated_entity->entity.pos_mtx), G_MTX_MODELVIEW | G_MTX_MUL | G_MTX_PUSH);
     gSPMatrix(glistp++, OS_K0_TO_PHYSICAL(&animated_entity->entity.rot_mtx[0]), G_MTX_MODELVIEW | G_MTX_MUL | G_MTX_PUSH);
     gSPMatrix(glistp++, OS_K0_TO_PHYSICAL(&animated_entity->entity.rot_mtx[1]), G_MTX_MODELVIEW | G_MTX_MUL | G_MTX_PUSH);
+    gSPMatrix(glistp++, OS_K0_TO_PHYSICAL(&animated_entity->entity.scale_mtx), G_MTX_MODELVIEW | G_MTX_MUL | G_MTX_PUSH);
 
     sausage64_drawmodel(&glistp, &animated_entity->helper);
 
+    gSPPopMatrix(glistp++, G_MTX_MODELVIEW);
     gSPPopMatrix(glistp++, G_MTX_MODELVIEW);
     gSPPopMatrix(glistp++, G_MTX_MODELVIEW);
     gSPPopMatrix(glistp++, G_MTX_MODELVIEW);
@@ -774,14 +540,6 @@ void set_pt(float* dest, float* src) {
     dest[2] = src[2];
 }
 
-int get_static_entity_width(StaticEntity* static_entity) {
-    if (static_entity->mesh == gfx_shack) return 800;
-}
-
-int get_static_entity_depth(StaticEntity* static_entity) {
-    if (static_entity->mesh == gfx_shack) return 700;
-}
-
 float dot(float *u, float *v) {
     return u[0] * v[0] + u[1] * v[1]; 
 }
@@ -789,95 +547,6 @@ float dot(float *u, float *v) {
 void vector(float *dest, float *p1, float *p2) {
     dest[0] = p2[0] - p1[0];
     dest[1] = p2[1] - p1[1];
-}
-
-// https://stackoverflow.com/questions/2752725/finding-whether-a-point-lies-inside-a-rectangle-or-not/37865332#37865332
-// currently only looks at x and y, despite passing in 3d points
-int pt_in_rect(float* pos1, Entity *entity, int width, int depth) {
-
-    float A[3]; float B[3]; float C[3]; float D[3];
-
-    float AB[3];float AM[3];float BC[3];float BM[3];
-
-    A[0] = entity->pos[0] + width / 2;
-    A[1] = entity->pos[1] + depth / 2;
-    
-    B[0] = entity->pos[0] - width / 2;
-    B[1] = entity->pos[1] + depth / 2;
-    
-    C[0] = entity->pos[0] - width / 2;
-    C[1] = entity->pos[1] - depth / 2;
-    
-    D[0] = entity->pos[0] + width / 2;
-    D[1] = entity->pos[1] - depth / 2;
-
-    vector(AB, A, B);
-    vector(AM, A, pos1);
-    vector(BC, B, C);
-    vector(BM, B, pos1);
-
-    float dotABAM = dot(AB, AM);
-    float dotABAB = dot(AB, AB);
-    float dotBCBM = dot(BC, BM);
-    float dotBCBC = dot(BC, BC);
-
-    return 0 <= dotABAM && dotABAM <= dotABAB && 0 <= dotBCBM && dotBCBM <= dotBCBC;
-
-    // javascript for reference from the link above
-    /*
-        function pointInRectangle(m, r) {
-            var AB = vector(r.A, r.B);
-            var AM = vector(r.A, m);
-            var BC = vector(r.B, r.C);
-            var BM = vector(r.B, m);
-            var dotABAM = dot(AB, AM);
-            var dotABAB = dot(AB, AB);
-            var dotBCBM = dot(BC, BM);
-            var dotBCBC = dot(BC, BC);
-            return 0 <= dotABAM && dotABAM <= dotABAB && 0 <= dotBCBM && dotBCBM <= dotBCBC;
-        }
-
-        function vector(p1, p2) {
-            return {
-                    x: (p2.x - p1.x),
-                    y: (p2.y - p1.y)
-            };
-        }
-
-        function dot(u, v) {
-            return u.x * v.x + u.y * v.y; 
-        }
-
-        var r = {
-            A: {x: 50, y: 0},
-            B: {x: 0, y: 20},
-            C: {x: 10, y: 50},
-            D: {x: 60, y: 30}
-        };
-
-        var m = {x: 40, y: 20};
-
-        pointInRectangle(m, r); // returns true.
-    */
-}
-
-// show the bounding rectangle for an object (that is not rotated)
-void debug_entity_collision_rect(StaticEntity* static_entity) {
-    scenery[0].entity.pos[0] =  static_entity->entity.pos[0] + get_static_entity_width(static_entity) / 2;
-    scenery[0].entity.pos[1] =  static_entity->entity.pos[1] + get_static_entity_depth(static_entity) / 2;
-    scenery[0].entity.pos[2] =  static_entity->entity.pos[2];
-
-    scenery[1].entity.pos[0] =  static_entity->entity.pos[0] - get_static_entity_width(static_entity) / 2;
-    scenery[1].entity.pos[1] =  static_entity->entity.pos[1] + get_static_entity_depth(static_entity) / 2;
-    scenery[1].entity.pos[2] =  static_entity->entity.pos[2];
-
-    scenery[2].entity.pos[0] =  static_entity->entity.pos[0] - get_static_entity_width(static_entity) / 2;
-    scenery[2].entity.pos[1] =  static_entity->entity.pos[1] - get_static_entity_depth(static_entity) / 2;
-    scenery[2].entity.pos[2] =  static_entity->entity.pos[2];
-
-    scenery[3].entity.pos[0] =  static_entity->entity.pos[0] + get_static_entity_width(static_entity) / 2;
-    scenery[3].entity.pos[1] =  static_entity->entity.pos[1] - get_static_entity_depth(static_entity) / 2;
-    scenery[3].entity.pos[2] =  static_entity->entity.pos[2];
 }
 
 float distance(float* pos1, float* pos2) {
@@ -913,97 +582,7 @@ float min(float a, float b) {
     else return b;
 }
 
-float minimum_distance(float *v, float *w, float *p) {
-  // Return minimum distance between line segment vw and point p
-  const float l2 = length_squared(v, w);  // i.e. |w-v|^2 -  avoid a sqrt
-  if (l2 == 0.0) return distance_2d(p, v);   // v == w case
-  // Consider the line extending the segment, parameterized as v + t (w - v).
-  // We find projection of point p onto the line. 
-  // It falls where t = [(p-v) . (w-v)] / |w-v|^2
-  // We clamp t from [0,1] to handle points outside the segment vw.
-  float p_v[3] = {};
-  p_v[0] = p[0] - v[0];
-  p_v[1] = p[1] - v[1];
-  float w_v[3] = {};
-  w_v[0] = w[0] - v[0];
-  w_v[1] = w[1] - v[1];
-  const float t = max(0, min(1, dot(p_v, w_v) / l2));
-  float projection[3];
-  projection[0] = v[0] + t * (w[0] - v[0]);
-  projection[1] = v[1] + t * (w[1] - v[1]);
-  //const vec2 projection = v + t * (w - v);  // Projection falls on the segment
-  return distance_2d(p, projection);
-}
-
-float min_dist_to_wall_old;
-float min_dist_to_wall_new;
-
 void detect_collisions() {
-    StaticEntity *shack = &scenery[SCENERY_COUNT - 1];
-    if ( pt_in_rect(nick.entity.pos, &scenery[SCENERY_COUNT - 1].entity, get_static_entity_width(shack), get_static_entity_depth(shack))) {
-        // just do the oposite of what we did to move this frame to get out of the wall
-        Entity *entity = &nick.entity;
-        // calculate if the next frame will move us out of the box
-        float new_pos[3] = {};
-        float frame_distance = time_data.frame_duration * entity->speed;
-        new_pos[0] = entity->pos[0] + frame_distance * sin(rad(entity->yaw));
-        new_pos[1] = entity->pos[1] - frame_distance * cos(rad(entity->yaw));
-
-
-        float A[3]; float B[3]; float C[3]; float D[3];
-
-        int width = get_static_entity_width(shack);
-        int depth = get_static_entity_depth(shack);
-
-        A[0] = entity->pos[0] + width / 2;
-        A[1] = entity->pos[1] + depth / 2;
-        
-        B[0] = entity->pos[0] - width / 2;
-        B[1] = entity->pos[1] + depth / 2;
-        
-        C[0] = entity->pos[0] - width / 2;
-        C[1] = entity->pos[1] - depth / 2;
-        
-        D[0] = entity->pos[0] + width / 2;
-        D[1] = entity->pos[1] - depth / 2;
-
-        min_dist_to_wall_old = 
-        min(
-            minimum_distance(A, D, nick.entity.pos),
-            min(
-                minimum_distance(C, D, nick.entity.pos),
-                min(
-                    minimum_distance(A, B, nick.entity.pos), 
-                    minimum_distance(B, C, nick.entity.pos)
-                )));
-
-        min_dist_to_wall_new = 
-        min(
-            minimum_distance(A, D, new_pos),
-            min(
-                minimum_distance(C, D, new_pos),
-                min(
-                    minimum_distance(A, B, new_pos), 
-                    minimum_distance(B, C, new_pos)
-                )));
-
-        if (pt_in_rect(new_pos, &scenery[SCENERY_COUNT - 1].entity, get_static_entity_width(shack), get_static_entity_depth(shack))
-        ) {
-            if (min_dist_to_wall_new != min_dist_to_wall_old) {
-                nick.entity.speed = 0;
-            }
-        }
-    }
-    if ( distance(nick.entity.pos, willy.entity.pos) < 150) {
-        nick.entity.speed = -800;
-        set_entity_state(&nick, FALLBACK);
-    }
-
-    if ( distance(candy.entity.pos, willy.entity.pos) < 150) {
-        //willy.entity.vertical_speed = 4000;
-        willy.entity.speed = 800;
-        set_entity_state(&willy, FALLBACK);
-    }
 }
 
 /*==============================
@@ -1034,26 +613,16 @@ void draw_world(AnimatedEntity *highlighted, Camera *camera, LightData *light){
     set_light(light);
 
     //draw the entities
-    set_pt(axis.entity.pos, willy.entity.pos);
-    //draw_static_entity(&axis);
 
     for (int i = 0; i < GROUND_SEGMENTS_COUNT; i++) {
         draw_static_entity(&ground_segments[i]);
     }
 
-    draw_static_entity(&candy);
-
-    debug_entity_collision_rect(&scenery[SCENERY_COUNT - 1]);
-
     for (int i = 0; i < SCENERY_COUNT; i++) {
         draw_static_entity(&scenery[i]);
     }
 
-
     draw_animated_entity(&nick);
-
-    draw_animated_entity(&willy);
-
 
     // Syncronize the RCP and CPU and specify that our display list has ended
     gDPFullSync(glistp++);
@@ -1065,11 +634,13 @@ void draw_world(AnimatedEntity *highlighted, Camera *camera, LightData *light){
 }
 
 
-
 /*==============================
     draw_debug_data
     Draws debug data
 ==============================*/
+
+
+int angle_to_player;
 
 void draw_debug_data(){
 
@@ -1077,26 +648,7 @@ void draw_debug_data(){
     nuDebConPrintf(NU_DEB_CON_WINDOW0, "FPS %d", (int)time_data.FPS);
 
     nuDebConTextPos(NU_DEB_CON_WINDOW0, 1, 2);
-    nuDebConPrintf(NU_DEB_CON_WINDOW0, "min old %d", (int) min_dist_to_wall_old * 100);
-    
-    nuDebConTextPos(NU_DEB_CON_WINDOW0, 1, 3);
-    nuDebConPrintf(NU_DEB_CON_WINDOW0, "min new %d", (int) min_dist_to_wall_new * 100);
-    /*
-    nuDebConTextPos(NU_DEB_CON_WINDOW0, 1, 4);
-    nuDebConPrintf(NU_DEB_CON_WINDOW0, "cur_frame %llu", time_data.cur_frame);
-    nuDebConTextPos(NU_DEB_CON_WINDOW0, 1, 5);
-    nuDebConPrintf(NU_DEB_CON_WINDOW0, "horizontal distance %d", (int)cam.horizontal_distance_from_entity);
-    nuDebConTextPos(NU_DEB_CON_WINDOW0, 1, 6);
-    nuDebConPrintf(NU_DEB_CON_WINDOW0, "vertical distance %d", (int)cam.vertical_distance_from_entity);
-    nuDebConTextPos(NU_DEB_CON_WINDOW0, 1, 7);
-    nuDebConPrintf(NU_DEB_CON_WINDOW0, "cam x %d", (int)cam.pos[0]);
-    nuDebConTextPos(NU_DEB_CON_WINDOW0, 1, 8);
-    nuDebConPrintf(NU_DEB_CON_WINDOW0, "cam y %d", (int)cam.pos[1]);
-    nuDebConTextPos(NU_DEB_CON_WINDOW0, 1, 9);
-    nuDebConPrintf(NU_DEB_CON_WINDOW0, "cam z %d", (int)cam.pos[2]);
-    nuDebConTextPos(NU_DEB_CON_WINDOW0, 1, 10);
-    nuDebConPrintf(NU_DEB_CON_WINDOW0, "time %d", (int)get_time());
-    */
+    nuDebConPrintf(NU_DEB_CON_WINDOW0, "angle to player %d", angle_to_player);
 }
 
 
@@ -1111,11 +663,6 @@ void stage00_init(void){
     sausage64_initmodel(&nick.helper, MODEL_nick, nickMtx);
     sausage64_set_anim(&nick.helper, ANIMATION_nick_idle); 
     sausage64_set_animcallback(&nick.helper, nick_animcallback);
-
-    sausage64_initmodel(&willy.helper, MODEL_willy, willyMtx);
-    //sausage64_set_anim(&willy.helper, ANIMATION_willy_run); 
-    sausage64_set_animcallback(&willy.helper, willy_animcallback);
-
 
     // the side length of one panel of ground
     int ground_size = 5000;
@@ -1146,11 +693,9 @@ void stage00_init(void){
     Update stage variables every frame
 ==============================*/
 
+
 void stage00_update(void){
     
-    // Poll for USB commands
-    debug_pollcommands();  
-
     //alculate fps
     time_management(&time_data);
 
@@ -1163,23 +708,11 @@ void stage00_update(void){
     detect_collisions();
 
     move_animated_entity_one_frame(&nick);
-    move_animated_entity_one_frame(&willy);
-    move_entity_one_frame(&candy.entity);
    
     // Advacnce animations
-    sausage64_advance_anim(&willy.helper, animspeed);
     
     sausage64_advance_anim(&nick.helper, animspeed);
 
-
-    // make willy do different stuff    
-
-    if (time_data.cur_frame % 1200 < 30) set_entity_state(&willy, RUN);
-    else if (time_data.cur_frame % 1200 < 35) willy.entity.yaw += 3 * (time_data.cur_frame % 10);
-    else if (time_data.cur_frame % 1200 < 40) willy.entity.yaw -= 3 * (time_data.cur_frame % 10);
-    //else if (time_data.cur_frame % 1200 < 42) set_entity_state(&willy, JUMP);
-    else if (time_data.cur_frame % 1200 < 44) set_entity_state(&willy, IDLE);
-    else if (time_data.cur_frame % 1200 < 48) set_entity_state(&willy, ROLL);
 }
 
 
@@ -1200,7 +733,6 @@ void stage00_draw(void){
     draw_world(&nick, &cam, &light_data);    
 
     // Ensure we haven't gone over the display list size and start the graphics task
-    debug_assert((glistp-glist) < GLIST_LENGTH);
     #if TV_TYPE != PAL
         nuGfxTaskStart(glist, (s32)(glistp - glist) * sizeof(Gfx), NU_GFX_UCODE_F3DEX, NU_SC_NOSWAPBUFFER);
     #else
