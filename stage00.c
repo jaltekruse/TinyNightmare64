@@ -29,10 +29,15 @@
 float frame_duration = 0.03f;
 float animspeed;
 
-#define LEN 100
 /*********************************
               Cube Mesh
 *********************************/
+// Custom combine mode to allow mixing primitive and vertex colors
+#ifndef G_CC_PRIMLITE
+    #define G_CC_PRIMLITE SHADE,0,PRIMITIVE,0,0,0,0,PRIMITIVE
+#endif
+
+#define LEN 100
 static Vtx vtx_cube[] = {
     {LEN, LEN, LEN, 0, 0, 0, 73, 73, 73, 255}, /* 0 */
     {0,   LEN, LEN, 0, 0, 0, -73, 73, 73, 255}, /* 1 */
@@ -47,6 +52,12 @@ static Vtx vtx_cube[] = {
 #define CUBE_GFX(r, g, b) \
     gsDPSetPrimColor(0, 0, r, g, b, 10),     \
     gsDPPipeSync(),                          \
+    gsDPSetCycleType(G_CYC_1CYCLE),          \
+    gsDPSetRenderMode(G_RM_AA_ZB_OPA_SURF, G_RM_AA_ZB_OPA_SURF2),    \
+    gsDPSetCombineMode(G_CC_PRIMLITE, G_CC_PRIMLITE),                \
+    gsDPSetTextureFilter(G_TF_BILERP),       \
+    gsSPClearGeometryMode(0xFFFFFFFF),       \
+    gsSPSetGeometryMode(G_SHADE | G_ZBUFFER | G_CULL_BACK | G_SHADING_SMOOTH | G_LIGHTING), \
     gsSPVertex(vtx_cube+0, 8, 0),            \
     gsSP2Triangles(0, 1, 2, 0, 0, 2, 3, 0),  \
     gsSP2Triangles(4, 3, 2, 0, 4, 2, 5, 0),  \
@@ -174,7 +185,7 @@ StaticEntity scenery[SCENERY_COUNT] = {
  {entity : {pos : {-600, 100, 30}, scale : 1, size: {5, 1, 1}}, mesh : gfx_cube_green}
 };
 
-static char uselight = FALSE;
+static char uselight = TRUE;
 static char drawaxis = TRUE;
 static char freezelight = FALSE;
 
