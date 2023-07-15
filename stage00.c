@@ -176,6 +176,7 @@ StaticEntity scenery[SCENERY_COUNT] = {
 
 static char uselight = FALSE;
 static char drawaxis = TRUE;
+static char freezelight = FALSE;
 
 /*==============================
     rad & deg
@@ -247,6 +248,12 @@ void set_light(LightData *light){
         light->amb.l.colc[i] = light->ambcol;
         light->dir.l.col[i] = 255;
         light->dir.l.colc[i] = 255;
+    }
+    // handle the light direction so it's always projecting from the camera's position
+    if (!freezelight){
+        light->dir.l.dir[0] = -127*sinf(light->angle[0]*0.0174532925);
+        light->dir.l.dir[1] = 127*sinf(light->angle[2]*0.0174532925)*cosf(light->angle[0]*0.0174532925);
+        light->dir.l.dir[2] = 127*cosf(light->angle[2]*0.0174532925)*cosf(light->angle[0]*0.0174532925);
     }
     // Send the light struct to the RSP
     gSPNumLights(glistp++, NUMLIGHTS_1);
