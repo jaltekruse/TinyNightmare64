@@ -28,6 +28,42 @@
 *********************************/
 float frame_duration = 0.03f;
 float animspeed;
+
+#define LEN 100
+/*********************************
+              Cube Mesh
+*********************************/
+static Vtx vtx_cube[] = {
+    {LEN, LEN, LEN, 0, 0, 0, 73, 73, 73, 255}, /* 0 */
+    {0,   LEN, LEN, 0, 0, 0, -73, 73, 73, 255}, /* 1 */
+    {0,   0,   LEN, 0, 0, 0, -73, -73, 73, 255}, /* 2 */
+    {LEN, 0,   LEN, 0, 0, 0, 73, -73, 73, 255}, /* 3 */
+    {LEN, 0,   0,   0, 0, 0, 73, -73, -73, 255}, /* 4 */
+    {0,   0,   0,   0, 0, 0, -73, -73, -73, 255}, /* 5 */
+    {0,   LEN, 0,   0, 0, 0, -73, 73, -73, 255}, /* 6 */
+    {LEN, LEN, 0,   0, 0, 0, 73, 73, -73, 255}, /* 7 */
+};
+
+#define CUBE_GFX(r, g, b) \
+    gsDPSetPrimColor(0, 0, r, g, b, 10),     \
+    gsDPPipeSync(),                          \
+    gsSPVertex(vtx_cube+0, 8, 0),            \
+    gsSP2Triangles(0, 1, 2, 0, 0, 2, 3, 0),  \
+    gsSP2Triangles(4, 3, 2, 0, 4, 2, 5, 0),  \
+    gsSP2Triangles(5, 2, 1, 0, 5, 1, 6, 0),  \
+    gsSP2Triangles(6, 7, 4, 0, 6, 4, 5, 0),  \
+    gsSP2Triangles(7, 0, 3, 0, 7, 3, 4, 0),  \
+    gsSP2Triangles(6, 1, 0, 0, 6, 0, 7, 0),  \
+    gsSPEndDisplayList(),                    \
+
+static Gfx gfx_cube_orange[] = {
+    CUBE_GFX(140, 75, 24)
+};
+
+static Gfx gfx_cube_green[] = {
+    CUBE_GFX(4, 75, 24)
+};
+
 typedef struct{
     Light amb;
     Light dir;
@@ -57,10 +93,12 @@ typedef struct {
 	Mtx	pos_mtx;
 	Mtx	rot_mtx[3];
 	Mtx scale_mtx;
+    // uniform scale in all directions
+	float scale;
+    // scale in each of the 3 dimensions indepedently
 	float size[3];
 	float pos[3];
 	float dir[3];
-	float scale;
 	float pitch;
 	float yaw;
 	float speed;
@@ -129,9 +167,11 @@ AnimatedEntity nick = {
 
 Mtx nickMtx[MESHCOUNT_nick];
 
-#define SCENERY_COUNT 1
+#define SCENERY_COUNT 3
 StaticEntity scenery[SCENERY_COUNT] = {
- {entity : {pos : {-300, 300, 30}, scale : 1}, mesh : gfx_ground}
+ {entity : {pos : {-300, 300, 30}, scale : 1}, mesh : gfx_cube_green},
+ {entity : {pos : {-600, 300, 30}, scale : 2}, mesh : gfx_cube_orange},
+ {entity : {pos : {-600, 100, 30}, scale : 1, size: {5, 1, 1}}, mesh : gfx_cube_green}
 };
 
 static char uselight = FALSE;
@@ -283,7 +323,13 @@ void draw_animated_entity(AnimatedEntity *animated_entity){
     guRotate(&animated_entity->entity.rot_mtx[0], animated_entity->entity.pitch, 1, 0, 0);
     guRotate(&animated_entity->entity.rot_mtx[1], animated_entity->entity.yaw, 0, 0, 1);
     float scale = animated_entity->entity.scale;
-    guScale(&animated_entity->entity.scale_mtx, scale, scale, scale);
+    float* size = animated_entity->entity.size;
+    // TODO review, assumes 0 value for uninitialized memory
+    if (size[0] > 0) {
+        guScale(&animated_entity->entity.scale_mtx, scale * size[0], scale * size[1], scale * size[2]);
+    } else {
+        guScale(&animated_entity->entity.scale_mtx, scale, scale, scale);
+    }
 
     gSPMatrix(glistp++, OS_K0_TO_PHYSICAL(&animated_entity->entity.pos_mtx), G_MTX_MODELVIEW | G_MTX_MUL | G_MTX_PUSH);
     gSPMatrix(glistp++, OS_K0_TO_PHYSICAL(&animated_entity->entity.rot_mtx[0]), G_MTX_MODELVIEW | G_MTX_MUL | G_MTX_PUSH);
@@ -309,7 +355,14 @@ void draw_static_entity(StaticEntity *static_entity){
     guRotate(&static_entity->entity.rot_mtx[0], static_entity->entity.pitch, 1, 0, 0);
     guRotate(&static_entity->entity.rot_mtx[1], static_entity->entity.yaw, 0, 0, 1);
     float scale = static_entity->entity.scale;
-    guScale(&static_entity->entity.scale_mtx, scale, scale, scale);
+
+    float* size = static_entity->entity.size;
+    // TODO review, assumes 0 value for uninitialized memory
+    if (size[0] > 0) {
+        guScale(&static_entity->entity.scale_mtx, scale * size[0], scale * size[1], scale * size[2]);
+    } else {
+        guScale(&static_entity->entity.scale_mtx, scale, scale, scale);
+    }
 
     gSPMatrix(glistp++, OS_K0_TO_PHYSICAL(&static_entity->entity.pos_mtx), G_MTX_MODELVIEW | G_MTX_MUL | G_MTX_PUSH);
     gSPMatrix(glistp++, OS_K0_TO_PHYSICAL(&static_entity->entity.rot_mtx[0]), G_MTX_MODELVIEW | G_MTX_MUL | G_MTX_PUSH);
@@ -391,13 +444,10 @@ void draw_world(AnimatedEntity *highlighted, Camera *camera, LightData *light){
     draw_debug_data
     Draws debug data
 ==============================*/
-
-int angle_to_player;
-
 void draw_debug_data(){
 
     nuDebConTextPos(NU_DEB_CON_WINDOW0, 1, 2);
-    nuDebConPrintf(NU_DEB_CON_WINDOW0, "angle to player %d", angle_to_player);
+    nuDebConPrintf(NU_DEB_CON_WINDOW0, "player pos %4d, %4d, %4d", (int)nick.entity.pos[0], (int)nick.entity.pos[1], (int)nick.entity.pos[2]);
 }
 
 
