@@ -3,7 +3,7 @@
 #
 
 ## About
-An attempt at making an N64 game for the N64brew Spooky Game Jam 2022.
+An attempt at making an N64 game for the N64brew Spooky Game Jam 2022. https://n64squid.com/tiny-nightmare/
 
 #
 
